@@ -330,9 +330,9 @@ class BasePlugin:
             Domoticz.Error("Charging not supported or not enabled for this vehicle")
 
     def setTargetTemperature(self, vehicle, Unit, Level):
-        if Level > 10 and float(Level) != vehicle.domains["climatisation"]["climatisationSettings"].targetTemperature_C.value:
+        if Level > 10 and float(Level) != vehicle.domains["climatisation"]["climatisationSettings"].targetTemperatureInCelsius.value:
             try:
-                vehicle.domains["climatisation"]["climatisationSettings"].targetTemperature_C.value = float(Level)
+                vehicle.domains["climatisation"]["climatisationSettings"].targetTemperatureInCelsius.value = float(Level)
                 Domoticz.Log("Climatisation temperature set successfully")
             except Exception as e:
                 Domoticz.Error(f"Failed to set target temperature: {e}")
