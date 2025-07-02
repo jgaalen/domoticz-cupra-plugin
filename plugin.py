@@ -117,11 +117,64 @@ class BasePlugin:
     def onStart(self):
         Domoticz.Log("Cupra Born Status Plugin v2.0.0 started")
         
-        # Parse parameters
-        self.update_interval = int(Parameters.get("Mode2", "300"))
-        max_retries = int(Parameters.get("Mode3", "3"))
-        rate_limit_delay = float(Parameters.get("Mode4", "2"))
-        self.debug_level = Parameters.get("Mode5", "Normal")
+        # Parse parameters with proper validation and defaults
+        # Note: Parameters is a global provided by Domoticz framework
+        try:
+            # Check if Parameters exists (safety check)
+            if 'Parameters' not in globals():
+                Domoticz.Error("Parameters object not available, using all defaults")
+                self.update_interval = 300
+                max_retries = 3
+                rate_limit_delay = 2.0
+                self.debug_level = "Normal"
+            else:
+                # Parse update interval
+                try:
+                    update_interval_str = Parameters.get("Mode2", "300")
+                    if not update_interval_str or update_interval_str.strip() == "":
+                        update_interval_str = "300"
+                    self.update_interval = int(update_interval_str)
+                    Domoticz.Log(f"Update interval set to: {self.update_interval} seconds")
+                except (ValueError, TypeError) as e:
+                    self.update_interval = 300
+                    Domoticz.Log(f"Failed to parse update interval, using default 300 seconds. Error: {e}")
+                    
+                # Parse max retries
+                try:
+                    max_retries_str = Parameters.get("Mode3", "3")
+                    if not max_retries_str or max_retries_str.strip() == "":
+                        max_retries_str = "3"
+                    max_retries = int(max_retries_str)
+                    Domoticz.Log(f"Max retries set to: {max_retries}")
+                except (ValueError, TypeError) as e:
+                    max_retries = 3
+                    Domoticz.Log(f"Failed to parse max retries, using default 3. Error: {e}")
+                    
+                # Parse rate limit delay
+                try:
+                    rate_limit_delay_str = Parameters.get("Mode4", "2")
+                    if not rate_limit_delay_str or rate_limit_delay_str.strip() == "":
+                        rate_limit_delay_str = "2"
+                    rate_limit_delay = float(rate_limit_delay_str)
+                    Domoticz.Log(f"Rate limit delay set to: {rate_limit_delay} seconds")
+                except (ValueError, TypeError) as e:
+                    rate_limit_delay = 2.0
+                    Domoticz.Log(f"Failed to parse rate limit delay, using default 2.0 seconds. Error: {e}")
+                    
+                # Parse debug level
+                self.debug_level = Parameters.get("Mode5", "Normal") or "Normal"
+                if not self.debug_level or self.debug_level.strip() == "":
+                    self.debug_level = "Normal"
+                Domoticz.Log(f"Debug level set to: {self.debug_level}")
+                
+        except Exception as e:
+            Domoticz.Error(f"Error parsing parameters: {e}")
+            # Use all defaults
+            self.update_interval = 300
+            max_retries = 3
+            rate_limit_delay = 2.0
+            self.debug_level = "Normal"
+            Domoticz.Log("Using all default parameter values due to parsing error")
         
         # Initialize rate limiter and retry handler
         self.rate_limiter = RateLimiter(min_interval=rate_limit_delay)
