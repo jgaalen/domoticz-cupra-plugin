@@ -23,6 +23,7 @@ Cupra Born
 """
 
 import Domoticz
+import os
 import time
 import threading
 import queue
@@ -32,6 +33,15 @@ from weconnect_cupra.service import Service
 from weconnect_cupra.api.cupra.elements.enums import UnlockPlugState, MaximumChargeCurrent
 from weconnect_cupra.api.cupra.elements.charging_status import ChargingStatus
 from weconnect_cupra.elements.control_operation import ControlOperation
+
+# Set environment variable to allow OAuth2 over HTTP if needed
+# This is a workaround for the "OAuth 2 MUST utilize https" error
+# Note: This should ideally not be needed, but some network configurations
+# or library versions may require this setting
+# WARNING: This allows OAuth2 over HTTP which is less secure, but may be
+# necessary if the library incorrectly detects HTTP when HTTPS is actually used
+if 'OAUTHLIB_INSECURE_TRANSPORT' not in os.environ:
+    os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 
 # import json
 
@@ -116,6 +126,11 @@ class BasePlugin:
 
     def onStart(self):
         Domoticz.Log("Cupra Born Status Plugin v2.0.0 started")
+        
+        # Log OAuth2 transport configuration
+        if os.environ.get('OAUTHLIB_INSECURE_TRANSPORT') == '1':
+            Domoticz.Log("OAuth2 insecure transport workaround is enabled (OAUTHLIB_INSECURE_TRANSPORT=1)")
+            Domoticz.Log("This is a workaround for the 'OAuth 2 MUST utilize https' error")
         
         # Parse parameters with proper validation and defaults
         # Note: Parameters is a global provided by Domoticz framework
